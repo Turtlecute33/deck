@@ -1,0 +1,37 @@
+{
+  "uid": "a4ca6c7d-604c-476f-8ed1-51a127b8b939",
+  "version": "0.2.0",
+  "name": "Claude Quota",
+  "description": "Claude plan use: 5-hour and weekly limits, and the weekly use since the last reset.",
+  "binary": "bin/claude-quota",
+  "icon": "assets/icon.svg",
+  "category": "utility",
+  "settings": [],
+  "supported_viewports": [
+    {
+      "type": "rectangular",
+      "min_width": 1280,
+      "max_width": 1280,
+      "min_height": 480,
+      "max_height": 480
+    }
+  ],
+  "params": {
+    "server_url": {
+      "name": "Quota server",
+      "description": "Address of the quota server on your LAN",
+      "type": "string",
+      "format": "uri",
+      "optional": true,
+      "placeholder": "e.g. http://quota-server.local:8787"
+    }
+  },
+  "credentials": {
+    "server": {
+      "type": "generic-token",
+      "label": "Quota server key",
+      "description": "The READ_KEY of the quota server",
+      "required": true
+    }
+  }
+}

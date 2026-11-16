@@ -1,0 +1,139 @@
+{
+  "uid": "cdee50e2-e853-412a-a724-0200b72d09aa",
+  "version": "0.1.2",
+  "name": "Calendar",
+  "subname": "Rail",
+  "description": "Today's events from the Google calendars you choose. The current or next event is large, the full day is one line below it.",
+  "binary": "bin/calendar-rail",
+  "icon": "assets/icon.svg",
+  "category": "calendar",
+  "settings": [
+    "timezone"
+  ],
+  "config_help": "Shows today's events from the Google calendars that you add below. Nothing shows until you add a calendar.\n\n**Account.** Make a *Token* account with the value from `tools/google-token.py`, and allow only `oauth2.googleapis.com`.\n\n**Calendar ID.** Google Calendar > Settings > the calendar > *Integrate calendar*. For your main calendar, use `primary`.\n\nTap an event on the timeline to see its details.",
+  "supported_viewports": [
+    {
+      "type": "rectangular",
+      "min_width": 317,
+      "max_width": 1280,
+      "min_height": 238,
+      "max_height": 480
+    }
+  ],
+  "params": {
+    "calendars": {
+      "name": "Calendars",
+      "description": "Only these calendars show. The colour is for the timeline.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "fields": {
+          "name": {
+            "name": "Name",
+            "description": "Shows when you tap an event",
+            "type": "string",
+            "min_length": 1,
+            "max_length": 40,
+            "placeholder": "Work"
+          },
+          "id": {
+            "name": "Calendar ID",
+            "type": "string",
+            "min_length": 1,
+            "max_length": 255,
+            "placeholder": "primary"
+          },
+          "color": {
+            "name": "Colour",
+            "type": "string",
+            "default_value": "blue",
+            "enum_values": [
+              {
+                "value": "blue",
+                "label": "Blue"
+              },
+              {
+                "value": "green",
+                "label": "Green"
+              },
+              {
+                "value": "amber",
+                "label": "Amber"
+              },
+              {
+                "value": "red",
+                "label": "Red"
+              },
+              {
+                "value": "violet",
+                "label": "Violet"
+              },
+              {
+                "value": "teal",
+                "label": "Teal"
+              },
+              {
+                "value": "yellow",
+                "label": "Yellow"
+              },
+              {
+                "value": "pink",
+                "label": "Pink"
+              },
+              {
+                "value": "gray",
+                "label": "Gray"
+              }
+            ]
+          }
+        }
+      },
+      "min_items": 0,
+      "max_items": 8,
+      "unique_items": [
+        "id"
+      ],
+      "default_value": []
+    },
+    "all_day": {
+      "name": "All-day events",
+      "description": "Show them at the top right",
+      "type": "boolean",
+      "default_value": true
+    },
+    "declined": {
+      "name": "Declined events",
+      "description": "Show the events you declined, as an outline",
+      "type": "boolean",
+      "default_value": false
+    },
+    "day_start": {
+      "name": "Day starts at",
+      "description": "First hour on the timeline",
+      "type": "integer",
+      "min": 0,
+      "max": 23,
+      "step": 1,
+      "unit": "h",
+      "default_value": 8
+    },
+    "day_end": {
+      "name": "Day ends at",
+      "description": "Last hour on the timeline",
+      "type": "integer",
+      "min": 1,
+      "max": 24,
+      "step": 1,
+      "unit": "h",
+      "default_value": 20
+    }
+  },
+  "credentials": {
+    "google": {
+      "type": "generic-token",
+      "label": "Google Calendar",
+      "description": "The value from tools/google-token.py. Allow only oauth2.googleapis.com.",
+      "required": true
+    }
+  }
+}

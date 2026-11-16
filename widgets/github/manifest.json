@@ -1,0 +1,27 @@
+{
+  "uid": "dd0fe3e6-7a06-4789-83ff-8f0ed392dfb3",
+  "version": "0.1.5",
+  "name": "GitHub",
+  "description": "Your unread GitHub notifications. With none, the stars you received today, followers and your top repo.",
+  "binary": "bin/github-notify",
+  "icon": "assets/icon.svg",
+  "category": "utility",
+  "settings": [],
+  "supported_viewports": [
+    {
+      "type": "rectangular",
+      "min_width": 1280,
+      "max_width": 1280,
+      "min_height": 480,
+      "max_height": 480
+    }
+  ],
+  "credentials": {
+    "github": {
+      "type": "generic-token",
+      "label": "GitHub token",
+      "description": "A classic personal access token with the notifications scope. Lock the account to api.github.com.",
+      "required": true
+    }
+  }
+}

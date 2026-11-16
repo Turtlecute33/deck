@@ -1,0 +1,7 @@
+# The Deck runs the widget launcher with /bin/sh; a CRLF breaks the shebang. Keep everything LF.
+* text=auto eol=lf
+
+*.png binary
+*.wasm binary
+*.nar binary
+*.svg text eol=lf

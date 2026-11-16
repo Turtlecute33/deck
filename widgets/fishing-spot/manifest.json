@@ -1,0 +1,43 @@
+{
+  "uid": "4bb71351-a77b-47bc-990d-26883ba2dac5",
+  "version": "0.4.0",
+  "name": "Fishing Spot",
+  "description": "Daily fishing index for a dovepescare.com spot that you choose: score, water and air temperature, wind, pressure, rain, flow or waves, moon and the species in season",
+  "binary": "bin/fishing-spot",
+  "icon": "assets/icon.svg",
+  "category": "weather",
+  "settings": [
+    "localization",
+    "timezone"
+  ],
+  "config_help": "Shows the daily fishing index of one spot from [dovepescare.com](https://dovepescare.com). Nothing shows until you set a spot.\n\n**Spot.** Open the spot on dovepescare.com and copy its address, the part after `/spot/`. For `https://dovepescare.com/spot/panaro-a-vignola/`, write `panaro-a-vignola`. You can also paste the full address.",
+  "supported_viewports": [
+    {
+      "type": "rectangular",
+      "min_width": 317,
+      "max_width": 1280,
+      "min_height": 238,
+      "max_height": 480
+    }
+  ],
+  "params": {
+    "spot": {
+      "name": "Spot",
+      "description": "The spot address on dovepescare.com",
+      "type": "string",
+      "optional": true,
+      "max_length": 200,
+      "placeholder": "panaro-a-vignola"
+    },
+    "day": {
+      "name": "Day",
+      "description": "Which forecast day the index is calculated for",
+      "type": "string",
+      "default_value": "today",
+      "enum_values": [
+        { "value": "today", "label": "Today" },
+        { "value": "tomorrow", "label": "Tomorrow" }
+      ]
+    }
+  }
+}

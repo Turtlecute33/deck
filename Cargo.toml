@@ -1,0 +1,33 @@
+[workspace]
+resolver = "3"
+members = ["widgets/*"]
+
+[workspace.dependencies]
+# Braiins Deck widget SDK, pinned to the 26.10.1 release (WASM protocol 0.9).
+bmc-wasm-sdk = { git = "https://github.com/BraiinsForge/bmc-main", rev = "e21ab71d173e05a331436490896b355cba3d1d06" }
+
+# The lints of bmc-main/widgets-wasm. A widget opts in with `[lints] workspace = true`.
+[workspace.lints.rust]
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+# Its `assert_eq!(x, [])` rewrite cannot infer the element type for most of
+# our collections, so it is not a drop-in improvement.
+assert_is_empty = "allow"
+doc_markdown = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+wildcard_imports = "allow" # Widgets import the SDK whole by design
+# Drawing code names its values x, y, w, h, r.
+many_single_char_names = "allow"
+similar_names = "allow"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = "z"
+panic = "abort"
+strip = true

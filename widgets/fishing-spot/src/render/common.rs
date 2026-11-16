@@ -296,18 +296,26 @@ pub fn species_cell(entry: &SpeciesScore, name_size: u32, bar_height: f32) -> No
     } else {
         display::species_rule(entry.entry)
     };
+    // Name, rule and bar each on a line of their own, every line one line high.
+    // Side by side, a long rule wrapped to two lines and pushed its cell out of
+    // line with the others.
+    let note_size = name_size.saturating_sub(4).max(12);
+    #[expect(clippy::cast_precision_loss, reason = "a font size in pixels")]
+    let note_height = note_size as f32;
     col(
-        props!(gap: 7.0, flex: 1.0),
+        props!(gap: 6.0, flex: 1.0),
         [
-            row(
-                props!(cross_align: CrossAlign::Center, gap: 8.0),
-                [
-                    text(
-                        species.name.to_owned(),
-                        style!(size: name_size, weight: FontWeight::SEMIBOLD, color: TEXT, line_height: 1.0, flex: 1.0, text_overflow: TextOverflow::Ellipsis),
-                    ),
-                    body(note, name_size.saturating_sub(3).max(12), MUTED),
-                ],
+            text(
+                species.name.to_owned(),
+                style!(size: name_size, weight: FontWeight::SEMIBOLD, color: TEXT, line_height: 1.0, text_overflow: TextOverflow::Ellipsis),
+            ),
+            // The rule keeps its line when it is empty, so all cells stay the same height.
+            col(
+                props!(height: note_height),
+                [text(
+                    note,
+                    style!(size: note_size, weight: FontWeight::REGULAR, color: MUTED, line_height: 1.0, text_overflow: TextOverflow::Ellipsis),
+                )],
             ),
             bar(fraction, bar_height, fill),
         ],

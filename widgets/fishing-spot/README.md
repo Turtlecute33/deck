@@ -106,6 +106,7 @@ cargo build -p bmc-widget-codegen --release
 
 - Palette: warm, not neutral. `render/common.rs` sets its own greys with a little more red than blue (`#191612` ground, `#2A251F` panels, `#F6F2EA` text). Colour is only on the gauge, the species bars and the warnings.
 - Tile readings are numbers only. The unit is in the caption (`WATER °C`, `PRESSURE mbar`). With the unit in the value, `1 013 mbar` did not fit a tile, the tile became two lines high, and the grid broke. A test in `display.rs` keeps every reading to 9 characters or less. A value that is too long gets an ellipsis.
+- A species cell has three lines: the name, the rule (minimum size, bag limit or closed season) and the bar. Each line is one line high with an ellipsis, and the rule line stays when it is empty, so all cells have the same height. With the name and the rule side by side, a long rule wrapped to two lines and pushed its cell out of line.
 - The header wraps the title in a `col`, so that the title and the date get the same flex share and the warnings stay in the centre. A flexed text node keeps its natural width as its basis; a flexed container starts from zero.
 - The full face shows not more than 2 warnings, so that the spot name stays visible. Bonuses (such as "Recommended season here") change the index but do not show.
 - Not shown, on purpose: a strip of the next days, the 72-hour rain (it is in the clarity model), the wind direction.

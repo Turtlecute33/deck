@@ -28,8 +28,8 @@ use crate::view::View;
 
 use bmc_wasm_sdk::*;
 
-const GAUGE_SIZE: f32 = 150.0;
-const GAUGE_NUMBER: u32 = 54;
+const GAUGE_SIZE: f32 = 136.0;
+const GAUGE_NUMBER: u32 = 50;
 
 fn index_panel(view: &View) -> Node {
     let evaluation = &view.evaluation;
@@ -41,14 +41,14 @@ fn index_panel(view: &View) -> Node {
         props!(
             background: PANEL,
             border_radius: RADIUS,
-            padding: 14.0,
+            padding: 12.0,
             gap: 16.0,
             cross_align: CrossAlign::Center
         ),
         [
             common::gauge(evaluation.score, evaluation.label(), GAUGE_SIZE, GAUGE_NUMBER),
             col(
-                props!(gap: 10.0, flex: 1.0),
+                props!(gap: 8.0, flex: 1.0),
                 [
                     common::caption("BEST WINDOW", 14),
                     common::value(window_label, 24, TEXT),
@@ -72,10 +72,10 @@ fn readings(view: &View) -> Node {
     let degrees = display::temperature_unit();
     let unit = |label: &str, unit: &str| fmt!("{} {}", label, unit);
     col(
-        props!(gap: 10.0),
+        props!(gap: 8.0),
         [
             row(
-                props!(gap: 10.0),
+                props!(gap: 8.0),
                 [
                     common::tile(
                         common::water_caption(view),
@@ -98,7 +98,7 @@ fn readings(view: &View) -> Node {
                 ],
             ),
             row(
-                props!(gap: 10.0),
+                props!(gap: 8.0),
                 [
                     common::tile(
                         unit("PRESSURE", "mbar"),
@@ -128,7 +128,7 @@ fn species(view: &View) -> Node {
         .map(|s| common::species_cell(s, 17, 9.0))
         .collect();
     col(
-        props!(gap: 9.0, flex: 1.0, justify_content: Justify::End),
+        props!(gap: 8.0, flex: 1.0, justify_content: Justify::End),
         [
             common::caption("IN SEASON NOW", 14),
             row(props!(gap: 16.0), cells),
@@ -139,7 +139,7 @@ fn species(view: &View) -> Node {
 #[must_use]
 pub fn large(view: &View) -> Node {
     col(
-        props!(background: BG, padding: 16.0, gap: 12.0),
+        props!(background: BG, padding: 16.0, gap: 8.0),
         [
             common::header(
                 view.spot.name,

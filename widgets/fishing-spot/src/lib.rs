@@ -30,7 +30,8 @@ pub mod display;
 pub mod engine;
 mod manifest_params;
 pub mod model;
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(not(target_arch = "wasm32"))]
+pub mod preview;
 pub mod render;
 pub mod spot;
 pub mod url;

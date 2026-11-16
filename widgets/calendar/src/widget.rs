@@ -1,15 +1,20 @@
-//! Data, settings and drawing. Runs only on the Deck (wasm32).
+//! Data, settings and drawing. The host glue (polls, frames, clock) runs only on
+//! the Deck (wasm32); the screens also build on the Mac, for `preview`.
 //!
 //! Data flow: the token poll trades the refresh token for an access token
 //! (the host puts the secrets into the request body; the widget never sees them).
 //! One poll for each calendar in the settings then reads that calendar's events
 //! for today and the next 7 days with the access token.
 
+#[cfg(target_arch = "wasm32")]
 use std::cell::RefCell;
 use std::f32::consts::{FRAC_PI_2, PI};
+#[cfg(target_arch = "wasm32")]
 use std::time::Duration;
 
-use bmc_wasm_sdk::format::{local_unix_secs_or_system, resolve_tz_offset};
+#[cfg(target_arch = "wasm32")]
+use bmc_wasm_sdk::format::local_unix_secs_or_system;
+use bmc_wasm_sdk::format::resolve_tz_offset;
 use bmc_wasm_sdk::*;
 
 use crate::model::{self, AllDay, DAY, Event, Hero, Kind, Reply, SOON_MIN, Side, SideLabel, Today, hhmm, span};
@@ -30,7 +35,7 @@ const ACC: Color = Color::from_hex(0xFF_7A_1A);
 const WARN: Color = Color::from_hex(0xE0_A3_3A);
 
 /// The colour choices in the settings.
-const PALETTE: [(&str, u32); 9] = [
+pub(crate) const PALETTE: [(&str, u32); 9] = [
     ("blue", 0x5B_8C_FF),
     ("green", 0x3D_D6_8C),
     ("amber", 0xF5_A5_24),
@@ -44,41 +49,52 @@ const PALETTE: [(&str, u32); 9] = [
 
 // ── Google ──────────────────────────────────────────────────────────
 
+#[cfg(target_arch = "wasm32")]
 const TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
+#[cfg(target_arch = "wasm32")]
 const API: &str = "https://www.googleapis.com/calendar/v3/calendars";
 /// The account holds `client_id=…&client_secret=…&refresh_token=…` (from tools/google-token.py).
 /// The host puts it in place of the placeholder as the request leaves.
+#[cfg(target_arch = "wasm32")]
 const TOKEN_BODY: &str = "{{ credential.google.token }}&grant_type=refresh_token";
 /// Only the fields the screen uses: no descriptions, no guest names.
+#[cfg(target_arch = "wasm32")]
 const FIELDS: &str = "items(summary,status,eventType,start,end,hangoutLink,location,\
     conferenceData/conferenceSolution/name,attendees(self,resource,responseStatus))";
 
+#[cfg(target_arch = "wasm32")]
 const MAX_CALS: usize = 8;
+#[cfg(target_arch = "wasm32")]
 const CAL_POLL_MS: u32 = 5 * 60_000;
 /// Access tokens last 60 min.
+#[cfg(target_arch = "wasm32")]
 const TOKEN_POLL_MS: u32 = 45 * 60_000;
 /// No good reply for this long: show the time of the last data.
 const OFFLINE_AFTER_S: i64 = 15 * 60;
 /// A tapped event shows this long.
+#[cfg(target_arch = "wasm32")]
 const DETAIL_S: i64 = 20;
 
 // ── Settings ────────────────────────────────────────────────────────
 
-struct Cal {
-    name: String,
+pub(crate) struct Cal {
+    pub(crate) name: String,
+    #[cfg(target_arch = "wasm32")]
     id: String,
-    color: Color,
+    pub(crate) color: Color,
 }
 
-struct Settings {
-    cals: Vec<Cal>,
-    all_day: bool,
+pub(crate) struct Settings {
+    pub(crate) cals: Vec<Cal>,
+    pub(crate) all_day: bool,
+    #[cfg(target_arch = "wasm32")]
     declined: bool,
-    from_h: i64,
-    to_h: i64,
+    pub(crate) from_h: i64,
+    pub(crate) to_h: i64,
 }
 
 impl Settings {
+    #[cfg(target_arch = "wasm32")]
     fn read() -> Self {
         let p = params::current();
         let cals = p
@@ -113,6 +129,7 @@ impl Settings {
     }
 
     /// What the fetched data depends on.
+    #[cfg(target_arch = "wasm32")]
     fn fetch_key(&self) -> String {
         let ids: Vec<&str> = self.cals.iter().map(|c| c.id.as_str()).collect();
         format!("{}|{}", ids.join("\n"), self.declined)
@@ -125,17 +142,19 @@ impl Settings {
 
 // ── Time ────────────────────────────────────────────────────────────
 
+#[cfg(target_arch = "wasm32")]
 fn now() -> i64 {
     SystemTime::now().unix_secs
 }
 
 /// Unix seconds to local wall-clock seconds, in the Deck's time zone.
-struct Local {
-    tz: Option<Tz>,
-    fallback: i64,
+pub(crate) struct Local {
+    pub(crate) tz: Option<Tz>,
+    pub(crate) fallback: i64,
 }
 
 impl Local {
+    #[cfg(target_arch = "wasm32")]
     fn get() -> Self {
         let n = now();
         Self {
@@ -144,7 +163,7 @@ impl Local {
         }
     }
 
-    fn at(&self, unix: i64) -> i64 {
+    pub(crate) fn at(&self, unix: i64) -> i64 {
         let offset = self.tz.as_ref().and_then(|tz| resolve_tz_offset(tz, unix)).map_or(self.fallback, i64::from);
         unix + offset
     }
@@ -153,51 +172,62 @@ impl Local {
 // ── State ───────────────────────────────────────────────────────────
 
 #[derive(Default)]
-struct CalData {
-    events: Vec<Event>,
-    all_day: Vec<AllDay>,
+pub(crate) struct CalData {
+    pub(crate) events: Vec<Event>,
+    pub(crate) all_day: Vec<AllDay>,
     /// Unix time of the last good reply, 0 before the first.
-    ok_at: i64,
-    error: Option<&'static str>,
+    pub(crate) ok_at: i64,
+    pub(crate) error: Option<&'static str>,
 }
 
 #[derive(Default)]
-struct State {
+pub(crate) struct State {
     /// Access token and its unix expiry.
+    #[cfg(target_arch = "wasm32")]
     token: Option<(String, i64)>,
+    #[cfg(target_arch = "wasm32")]
     error: Option<&'static str>,
     /// Google refused the client or the refresh token.
+    #[cfg(target_arch = "wasm32")]
     auth_failed: bool,
-    cals: Vec<CalData>,
+    pub(crate) cals: Vec<CalData>,
+    #[cfg(target_arch = "wasm32")]
     fetch_key: String,
     /// Tapped event: its start, title, and the unix time of the tap.
+    #[cfg(target_arch = "wasm32")]
     detail: Option<(i64, String, i64)>,
 }
 
+#[cfg(target_arch = "wasm32")]
 thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::default());
     static TOKEN: RefCell<Option<PollHandle>> = const { RefCell::new(None) };
     static CALS: RefCell<Vec<PollHandle>> = const { RefCell::new(Vec::new()) };
 }
 
+#[cfg(target_arch = "wasm32")]
 fn bound() -> bool {
     credentials::current().is_bound("google")
 }
 
+#[cfg(target_arch = "wasm32")]
 fn slot_of(handle: &PollHandle) -> Option<usize> {
     CALS.with_borrow(|polls| polls.iter().position(|p| p.index() == handle.index()))
 }
 
+#[cfg(target_arch = "wasm32")]
 fn refresh_calendars() {
     CALS.with_borrow(|polls| polls.iter().for_each(PollHandle::invalidate));
 }
 
+#[cfg(target_arch = "wasm32")]
 fn refresh_token() {
     TOKEN.with_borrow(|t| t.iter().for_each(PollHandle::invalidate));
 }
 
 // ── Data ────────────────────────────────────────────────────────────
 
+#[cfg(target_arch = "wasm32")]
 fn token_request(_handle: &PollHandle) -> Option<FetchSpec> {
     bound().then(|| {
         FetchSpec::post(TOKEN_URL)
@@ -207,6 +237,7 @@ fn token_request(_handle: &PollHandle) -> Option<FetchSpec> {
     })
 }
 
+#[cfg(target_arch = "wasm32")]
 fn on_token(handle: &PollHandle, response: &FetchResponse) {
     let doc = response.json();
     let token = if response.ok() { doc.str("/access_token").zip(doc.i64("/expires_in")) } else { None };
@@ -233,6 +264,7 @@ fn on_token(handle: &PollHandle, response: &FetchResponse) {
     request_frame();
 }
 
+#[cfg(target_arch = "wasm32")]
 fn token_refusal(response: &FetchResponse, doc: &JsonDoc) -> (&'static str, bool) {
     if response.outcome() == Some(FetchOutcome::Refused) {
         return ("The Deck blocked the request. Allow oauth2.googleapis.com for the Google account.", true);
@@ -244,6 +276,7 @@ fn token_refusal(response: &FetchResponse, doc: &JsonDoc) -> (&'static str, bool
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 fn cal_request(handle: &PollHandle) -> Option<FetchSpec> {
     let slot = slot_of(handle)?;
     let id = Settings::read().cals.get(slot)?.id.clone();
@@ -265,6 +298,7 @@ fn cal_request(handle: &PollHandle) -> Option<FetchSpec> {
     )
 }
 
+#[cfg(target_arch = "wasm32")]
 fn on_cal(handle: &PollHandle, response: &FetchResponse) {
     let Some(slot) = slot_of(handle) else {
         return;
@@ -306,6 +340,7 @@ fn on_cal(handle: &PollHandle, response: &FetchResponse) {
 }
 
 /// The events of one reply. `None` when the reply is not an events list.
+#[cfg(target_arch = "wasm32")]
 fn parse_events(doc: &JsonDoc, slot: usize, declined: bool, local: &Local) -> Option<(Vec<Event>, Vec<AllDay>)> {
     if doc.kind("") != Some(JsonKind::Object) {
         return None;
@@ -747,6 +782,7 @@ fn root(w: f32, h: f32, children: Vec<Node>) -> Node {
     col(props!(width: w, height: h, background: BG), children)
 }
 
+#[cfg(target_arch = "wasm32")]
 #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "the screen width in pixels")]
 fn message(w: f32, h: f32, msg: &str) -> Node {
     let size = if w < 640.0 { 18 } else { 26 };
@@ -811,9 +847,9 @@ fn hero_nodes(hero: &Hero, detail: Option<(&Event, &Settings, i64)>, size: u32, 
     }
 }
 
-fn full(s: &State, set: &Settings, t: &Today, local: &Local, n: i64, selected: Option<usize>) -> Node {
+pub(crate) fn full(s: &State, set: &Settings, t: &Today, local: &Local, n: i64, selected: Option<usize>) -> Node {
     let (hero, side) = model::plan(t);
-    let detail = selected.map(|i| (t.timed[i], set, n));
+    let detail = selected.map(|i| (t.timed[i], set, t.now));
     let (draws, touches) = timeline(t, set, &FULL_TRACK, selected, true);
     let mut nodes = vec![canvas(props!(inset_left: 0.0, inset_top: 0.0, width: 1280.0, height: 480.0), draws)];
     if selected.is_some() {
@@ -836,9 +872,9 @@ fn full(s: &State, set: &Settings, t: &Today, local: &Local, n: i64, selected: O
     root(1280.0, 480.0, nodes)
 }
 
-fn large(set: &Settings, t: &Today, n: i64, selected: Option<usize>) -> Node {
+pub(crate) fn large(set: &Settings, t: &Today, selected: Option<usize>) -> Node {
     let (hero, side) = model::plan(t);
-    let detail = selected.map(|i| (t.timed[i], set, n));
+    let detail = selected.map(|i| (t.timed[i], set, t.now));
     let (draws, touches) = timeline(t, set, &LARGE_TRACK, selected, true);
     let mut draws = draws;
     let side = side.filter(|_| detail.is_none());
@@ -868,7 +904,7 @@ fn short_lines(hero: &Hero, t: &Today) -> (String, Option<Accent>, Option<String
     }
 }
 
-fn medium(set: &Settings, t: &Today) -> Node {
+pub(crate) fn medium(set: &Settings, t: &Today) -> Node {
     let (hero, _) = model::plan(t);
     let (draws, _) = timeline(t, set, &MEDIUM_TRACK, None, false);
     let mut block = vec![];
@@ -893,7 +929,7 @@ fn medium(set: &Settings, t: &Today) -> Node {
     )
 }
 
-fn small(set: &Settings, t: &Today) -> Node {
+pub(crate) fn small(set: &Settings, t: &Today) -> Node {
     let (hero, side) = model::plan(t);
     let (draws, _) = timeline(t, set, &SMALL_TRACK, None, false);
     let (head, acc, sub) = short_lines(&hero, t);
@@ -918,6 +954,7 @@ fn small(set: &Settings, t: &Today) -> Node {
 }
 
 /// Before the first data: the date and an empty track.
+#[cfg(target_arch = "wasm32")]
 fn loading(set: &Settings, variant: SizeVariant, t: &Today) -> Node {
     let (track, w, h) = match variant {
         SizeVariant::Full => (&FULL_TRACK, 1280.0, 480.0),
@@ -936,6 +973,7 @@ fn loading(set: &Settings, variant: SizeVariant, t: &Today) -> Node {
 }
 
 /// The screen with no calendar in the settings.
+#[cfg(target_arch = "wasm32")]
 fn no_calendar(variant: SizeVariant, w: f32, h: f32) -> Node {
     match variant {
         SizeVariant::Full => root(
@@ -953,6 +991,7 @@ fn no_calendar(variant: SizeVariant, w: f32, h: f32) -> Node {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 fn screen(s: &State, set: &Settings, variant: SizeVariant, local: &Local, n: i64) -> Node {
     #[expect(clippy::cast_precision_loss, reason = "the screen size in pixels")]
     let (w, h) = (variant.width() as f32, variant.height() as f32);
@@ -987,7 +1026,7 @@ fn screen(s: &State, set: &Settings, variant: SizeVariant, local: &Local, n: i64
         .and_then(|(start, title, _)| t.timed.iter().position(|e| e.start == *start && &e.title == title));
     match variant {
         SizeVariant::Full => full(s, set, &t, local, n, selected),
-        SizeVariant::Large => large(set, &t, n, selected),
+        SizeVariant::Large => large(set, &t, selected),
         SizeVariant::Medium => medium(set, &t),
         SizeVariant::Small => small(set, &t),
     }
@@ -995,6 +1034,7 @@ fn screen(s: &State, set: &Settings, variant: SizeVariant, local: &Local, n: i64
 
 /// The tapped event, to show its details, from the bar keys `e<index>`.
 /// `None`: no tap. `Some(None)`: close the details. `Some(Some(..))`: show this event.
+#[cfg(target_arch = "wasm32")]
 #[expect(clippy::option_option, reason = "three outcomes, documented above")]
 fn tapped(result: &TreeRenderResult, s: &State, set: &Settings, local: &Local, n: i64) -> Option<Option<(i64, String, i64)>> {
     let bar = result.clicks.keys().find_map(|k| k.strip_prefix('e')?.parse::<usize>().ok());
@@ -1017,6 +1057,7 @@ fn tapped(result: &TreeRenderResult, s: &State, set: &Settings, local: &Local, n
 
 // ── Widget lifecycle ────────────────────────────────────────────────
 
+#[cfg(target_arch = "wasm32")]
 #[unsafe(no_mangle)]
 pub extern "C" fn init() {
     let token = register_poll(
@@ -1043,6 +1084,7 @@ pub extern "C" fn init() {
     // The calendar polls start when the first access token arrives.
 }
 
+#[cfg(target_arch = "wasm32")]
 #[unsafe(no_mangle)]
 pub extern "C" fn on_params_update() {
     let key = Settings::read().fetch_key();
@@ -1061,6 +1103,7 @@ pub extern "C" fn on_params_update() {
     request_frame();
 }
 
+#[cfg(target_arch = "wasm32")]
 #[unsafe(no_mangle)]
 pub extern "C" fn on_credentials_update() {
     STATE.with_borrow_mut(|s| {
@@ -1073,16 +1116,19 @@ pub extern "C" fn on_credentials_update() {
     request_frame();
 }
 
+#[cfg(target_arch = "wasm32")]
 #[unsafe(no_mangle)]
 pub extern "C" fn on_system_update() {
     request_frame();
 }
 
+#[cfg(target_arch = "wasm32")]
 #[unsafe(no_mangle)]
 pub extern "C" fn on_touch() {
     request_frame();
 }
 
+#[cfg(target_arch = "wasm32")]
 #[unsafe(no_mangle)]
 pub extern "C" fn render(_delta_ms: u32) {
     let vp = widget_viewport();

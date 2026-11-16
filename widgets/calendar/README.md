@@ -8,6 +8,24 @@ Shows today's events from the Google calendars that you choose. The current or n
 - Tap a bar to see the details of that event. Tap again, or wait 20 s, to go back.
 - Sizes: 1280 × 480, 638 × 480, 638 × 238 and 317 × 238.
 
+## Screens
+
+![The meeting now, the next call with no break, and the full day on the timeline](../../docs/screenshots/calendar-rail-fullscreen.png)
+
+Tap a bar to see the time, place, guests and calendar of that event:
+
+![The details of a tapped event](../../docs/screenshots/calendar-rail-detail.png)
+
+The smaller sizes: 638 × 480, 638 × 238 and 317 × 238.
+
+<p>
+  <img src="../../docs/screenshots/calendar-rail-large.png" width="49%" alt="638 × 480: the meeting now, the next call and the timeline">
+  <img src="../../docs/screenshots/calendar-rail-medium.png" width="49%" alt="638 × 238: the meeting now and the timeline">
+  <img src="../../docs/screenshots/calendar-rail-small.png" width="25%" alt="317 × 238: the meeting now and the next event">
+</p>
+
+The screens use made-up events. To make them again, see "Screenshots" in the [root README](../../README.md).
+
 ## Data
 
 - Read-only scope `calendar.events.readonly`. The widget cannot change your calendar.

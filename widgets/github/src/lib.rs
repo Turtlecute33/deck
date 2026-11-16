@@ -4,11 +4,13 @@
 //! With no notifications it shows the change in total stars since local midnight, the total
 //! stars, the followers and the top repo, read with one GraphQL request every 15 min.
 
-#[cfg(target_arch = "wasm32")]
 mod widget {
+    #[cfg(target_arch = "wasm32")]
     use std::cell::RefCell;
+    #[cfg(target_arch = "wasm32")]
     use std::time::Duration;
 
+    #[cfg(target_arch = "wasm32")]
     use bmc_wasm_sdk::format::{FormatTimeOpts, format_time, local_unix_secs_or_system};
     use bmc_wasm_sdk::*;
 
@@ -18,6 +20,7 @@ mod widget {
     const MUTE: Color = Color::from_hex(0x9C_95_8A);
     const ACC: Color = Color::from_hex(0xFF_6A_1A);
     const BLK: Color = Color::from_hex(0x0A_0A_0A);
+    #[cfg(target_arch = "wasm32")]
     const PILL: Color = Color::from_hex(0x0A_0A_0A);
 
     #[derive(Clone, Copy)]
@@ -26,9 +29,11 @@ mod widget {
         Star,
     }
 
+    #[cfg(target_arch = "wasm32")]
     const API: &str = "https://api.github.com";
     /// The host puts the bound token in place of the placeholder as the request leaves;
     /// the widget never sees it. GitHub refuses requests that have no User-Agent.
+    #[cfg(target_arch = "wasm32")]
     const HEADERS: &str = "Accept: application/vnd.github+json\n\
         Authorization: Bearer {{ credential.github.token }}\n\
         X-GitHub-Api-Version: 2022-11-28\n\
@@ -37,13 +42,17 @@ mod widget {
     /// the host reads that as a credential placeholder.
     /// Forks are included: a fork can have its own stars.
     /// No stargazer list: since July 2026 GitHub gives it only to tokens with write access.
+    #[cfg(target_arch = "wasm32")]
     const STATS_QUERY: &str = r#"{"query":"query { viewer { followers { totalCount } repositories(first: 100, ownerAffiliations: OWNER, orderBy: { field: STARGAZERS, direction: DESC }) { nodes { name stargazerCount } } } }"}"#;
 
+    #[cfg(target_arch = "wasm32")]
     const NOTIF_POLL_MS: u32 = 60_000;
+    #[cfg(target_arch = "wasm32")]
     const STATS_POLL_MS: u32 = 15 * 60_000;
     /// One page of notifications. A full page shows as "50+".
     const PAGE: usize = 50;
     /// No good reply for this long: dim the screen and say how old the data is.
+    #[cfg(target_arch = "wasm32")]
     const OFFLINE_AFTER_S: i64 = 300;
 
     // Screen layout (the manifest allows only the 1280 × 480 full screen).
@@ -69,25 +78,26 @@ mod widget {
     /// `CONTENT_W` for text styles, which take whole pixels.
     const TEXT_W: u32 = 754;
 
-    struct Notif {
-        label: &'static str,
+    pub(crate) struct Notif {
+        pub(crate) label: &'static str,
         /// CI and security: the label is orange.
-        hot: bool,
-        title: String,
+        pub(crate) hot: bool,
+        pub(crate) title: String,
         /// `repo #number`
-        place: String,
-        updated_at: i64,
+        pub(crate) place: String,
+        pub(crate) updated_at: i64,
     }
 
-    struct Stats {
+    pub(crate) struct Stats {
         /// Change in total stars since local midnight.
-        today: i64,
-        total: i64,
-        followers: i64,
-        followers_delta: Option<i64>,
-        top: Option<(String, i64)>,
+        pub(crate) today: i64,
+        pub(crate) total: i64,
+        pub(crate) followers: i64,
+        pub(crate) followers_delta: Option<i64>,
+        pub(crate) top: Option<(String, i64)>,
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[derive(Default)]
     struct State {
         /// The newest three unread notifications.
@@ -102,21 +112,25 @@ mod widget {
         auth_failed: bool,
     }
 
+    #[cfg(target_arch = "wasm32")]
     thread_local! {
         static STATE: RefCell<State> = RefCell::new(State::default());
         static POLLS: RefCell<Vec<PollHandle>> = const { RefCell::new(Vec::new()) };
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn now() -> i64 {
         SystemTime::now().unix_secs
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn token_bound() -> bool {
         credentials::current().is_bound("github")
     }
 
     // ── Data ────────────────────────────────────────────────────────────
 
+    #[cfg(target_arch = "wasm32")]
     fn notifs_request(_handle: &PollHandle) -> Option<FetchSpec> {
         token_bound().then(|| {
             FetchSpec::get(format!("{API}/notifications?per_page={PAGE}"))
@@ -125,6 +139,7 @@ mod widget {
         })
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn stats_request(_handle: &PollHandle) -> Option<FetchSpec> {
         token_bound().then(|| {
             FetchSpec::post(format!("{API}/graphql"))
@@ -135,6 +150,7 @@ mod widget {
     }
 
     /// The text for a refused reply, and whether the token is the cause.
+    #[cfg(target_arch = "wasm32")]
     fn refusal(response: &FetchResponse) -> (&'static str, bool) {
         if response.outcome() == Some(FetchOutcome::Refused) {
             return ("The Deck blocked the request. Allow api.github.com for the token account.", true);
@@ -149,6 +165,7 @@ mod widget {
         }
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn on_notifs(handle: &PollHandle, response: &FetchResponse) {
         let parsed = if response.ok() { parse_notifs(&response.json()) } else { None };
         let ok = parsed.is_some();
@@ -177,6 +194,7 @@ mod widget {
         request_frame();
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn on_stats(handle: &PollHandle, response: &FetchResponse) {
         let parsed = if response.ok() { parse_stats(&response.json(), now()) } else { None };
         if parsed.is_none() {
@@ -189,6 +207,7 @@ mod widget {
     }
 
     /// `(newest three, count)`, or `None` when the reply is not a notifications list.
+    #[cfg(target_arch = "wasm32")]
     fn parse_notifs(doc: &JsonDoc) -> Option<(Vec<Notif>, usize)> {
         if doc.kind("") != Some(JsonKind::Array) {
             return None;
@@ -218,7 +237,7 @@ mod widget {
         Some((list, n))
     }
 
-    fn kind(reason: &str, subject: &str) -> (&'static str, bool) {
+    pub(crate) fn kind(reason: &str, subject: &str) -> (&'static str, bool) {
         match reason {
             "review_requested" => ("Review", false),
             "mention" | "team_mention" => ("Mention", false),
@@ -241,6 +260,7 @@ mod widget {
         }
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn parse_stats(doc: &JsonDoc, now: i64) -> Option<Stats> {
         let followers = doc.i64("/data/viewer/followers/totalCount")?;
         let n = doc.len("/data/viewer/repositories/nodes")?;
@@ -276,6 +296,7 @@ mod widget {
     /// after adding today's count if there is none yet. The counts persist on the Deck
     /// under `key` as `day:count;day:count`. The first count of each day is kept,
     /// so it is the count near midnight.
+    #[cfg(target_arch = "wasm32")]
     fn daily_counts(key: &str, count: i64, today: i64) -> Vec<(i64, i64)> {
         let old = kv::get_string(key).unwrap_or_default();
         let mut days: Vec<(i64, i64)> = old
@@ -325,6 +346,7 @@ mod widget {
 
     // ── Screen ──────────────────────────────────────────────────────────
 
+    #[cfg(target_arch = "wasm32")]
     fn message(msg: &str) -> Node {
         col(
             props!(width: SCREEN_W, height: SCREEN_H, background: BG, justify_content: Justify::Center, cross_align: CrossAlign::Center),
@@ -463,7 +485,7 @@ mod widget {
         text(s, style!(size: 18, weight: FontWeight::BOLD, color: ACC))
     }
 
-    fn notifications_screen(list: &[Notif], count: usize, now: i64) -> Node {
+    pub(crate) fn notifications_screen(list: &[Notif], count: usize, now: i64) -> Node {
         let shown = if count >= PAGE { format!("{PAGE}+") } else { count.to_string() };
         let solo = list.len() == 1;
         let h = if solo { SOLO_H } else { ROW_H };
@@ -478,7 +500,7 @@ mod widget {
         col(props!(width: SCREEN_W, height: SCREEN_H, background: BG), nodes)
     }
 
-    fn quiet_screen(stats: Option<&Stats>) -> Node {
+    pub(crate) fn quiet_screen(stats: Option<&Stats>) -> Node {
         let mut d = Vec::new();
         let today = match stats {
             Some(s) if s.today > 0 => format!("+{}", s.today),
@@ -514,6 +536,7 @@ mod widget {
         )
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn screen(s: &State, now: i64) -> Node {
         if !token_bound() {
             return message("Add a GitHub token in the widget settings.");
@@ -546,11 +569,13 @@ mod widget {
 
     // ── Widget lifecycle ────────────────────────────────────────────────
 
+    #[cfg(target_arch = "wasm32")]
     fn refresh() {
         POLLS.with_borrow(|polls| polls.iter().for_each(PollHandle::invalidate));
         request_frame();
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn init() {
         let notifs = register_poll(
@@ -574,22 +599,26 @@ mod widget {
         POLLS.set(vec![notifs, stats]);
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn on_params_update() {
         refresh();
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn on_credentials_update() {
         STATE.set(State::default());
         refresh();
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn on_system_update() {
         request_frame();
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn render(_delta_ms: u32) {
         let vp = widget_viewport();
@@ -599,3 +628,6 @@ mod widget {
         request_frame_after(30_000);
     }
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod preview;

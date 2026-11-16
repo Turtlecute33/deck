@@ -1,6 +1,6 @@
 {
   "uid": "4bb71351-a77b-47bc-990d-26883ba2dac5",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "name": "Fishing Spot",
   "description": "Daily fishing index for a dovepescare.com spot that you choose: score, water and air temperature, wind, pressure, rain, flow or waves, moon and the species in season",
   "binary": "bin/fishing-spot",

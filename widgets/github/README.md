@@ -5,6 +5,16 @@ Shows your unread GitHub notifications: the count, and the newest three with typ
 - With no unread notifications, it shows the stars you received today, your total stars, your followers (with the change over the last 7 days) and your top repo.
 - Size: 1280 × 480 (full screen) only.
 
+## Screens
+
+![The unread count and the newest three notifications, with a failed CI run in orange](../../docs/screenshots/github-notify-notifications.png)
+
+With no unread notifications:
+
+![Stars today, total stars, followers and the top repo](../../docs/screenshots/github-notify-stats.png)
+
+The screens use made-up repos and numbers. To make them again, see "Screenshots" in the [root README](../../README.md).
+
 ## Data
 
 - It connects only to `api.github.com`.

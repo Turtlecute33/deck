@@ -5,5 +5,7 @@
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 mod model;
 
-#[cfg(target_arch = "wasm32")]
 mod widget;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod preview;

@@ -2,10 +2,17 @@
 //!
 //! Reads the LAN quota server every 60 s. Left: the 5-hour and weekly use with
 //! the time to reset. Right: the weekly use since the last weekly reset.
+//!
+//! The widget glue runs only on the Deck (wasm32). The screen also builds on
+//! the host, so the `preview` module can draw it from made-up data.
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(not(target_arch = "wasm32"))]
+pub mod preview;
+
 mod widget {
+    #[cfg(target_arch = "wasm32")]
     use std::cell::RefCell;
+    #[cfg(target_arch = "wasm32")]
     use std::time::Duration;
 
     use bmc_wasm_sdk::format::{FormatTimeOpts, format_time, local_unix_secs_or_system, strftime};
@@ -23,7 +30,9 @@ mod widget {
     const PILL_TEXT: Color = Color::from_hex(0xD6_D3_CB);
 
     /// The host puts the bound key here as the request leaves; the widget never sees it.
+    #[cfg(target_arch = "wasm32")]
     const KEY: &str = "{{ credential.server.token }}";
+    #[cfg(target_arch = "wasm32")]
     const POLL_MS: u32 = 60_000;
     /// No good reply for this long: dim the screen and say how old the data is.
     const OFFLINE_AFTER_S: i64 = 180;
@@ -39,44 +48,48 @@ mod widget {
     const CHART_BOT: f32 = 350.0;
 
     #[derive(Clone, Copy)]
-    struct Window {
-        pct: f64,
-        resets_at: i64,
+    pub(crate) struct Window {
+        pub(crate) pct: f64,
+        pub(crate) resets_at: i64,
     }
 
-    struct Quota {
-        updated_at: i64,
-        server_stale: bool,
-        five: Option<Window>,
-        weekly: Option<Window>,
-        week_start: i64,
+    pub(crate) struct Quota {
+        pub(crate) updated_at: i64,
+        pub(crate) server_stale: bool,
+        pub(crate) five: Option<Window>,
+        pub(crate) weekly: Option<Window>,
+        pub(crate) week_start: i64,
         /// `(seconds since week_start, pct)`
-        points: Vec<(i64, f64)>,
+        pub(crate) points: Vec<(i64, f64)>,
     }
 
     #[derive(Default)]
-    struct State {
-        quota: Option<Quota>,
+    pub(crate) struct State {
+        pub(crate) quota: Option<Quota>,
         /// Device time of the last good reply.
-        last_ok: i64,
+        pub(crate) last_ok: i64,
         /// The last reply failed.
-        failed: bool,
+        pub(crate) failed: bool,
     }
 
+    #[cfg(target_arch = "wasm32")]
     thread_local! {
         static STATE: RefCell<State> = RefCell::new(State::default());
         static POLL: RefCell<Option<PollHandle>> = const { RefCell::new(None) };
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn now() -> i64 {
         SystemTime::now().unix_secs
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn key_bound() -> bool {
         credentials::current().is_bound("server")
     }
 
     /// The quota server address from the settings. There is no default.
+    #[cfg(target_arch = "wasm32")]
     fn server_url() -> Option<String> {
         let p = params::current();
         p.get_str("server_url")
@@ -87,6 +100,7 @@ mod widget {
 
     // ── Data ────────────────────────────────────────────────────────────
 
+    #[cfg(target_arch = "wasm32")]
     fn build_request(_handle: &PollHandle) -> Option<FetchSpec> {
         if !key_bound() {
             return None;
@@ -99,6 +113,7 @@ mod widget {
         )
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn on_reply(handle: &PollHandle, response: &FetchResponse) {
         let parsed = if response.ok() { parse(&response.json()) } else { None };
         let ok = parsed.is_some();
@@ -118,11 +133,13 @@ mod widget {
         request_frame();
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn num(doc: &JsonDoc, path: &str) -> Option<f64> {
         #[expect(clippy::cast_precision_loss, reason = "percentages are small")]
         doc.f64(path).or_else(|| doc.i64(path).map(|v| v as f64))
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn window(doc: &JsonDoc, key: &str) -> Option<Window> {
         Some(Window {
             pct: num(doc, &format!("/{key}/pct"))?,
@@ -130,6 +147,7 @@ mod widget {
         })
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn parse(doc: &JsonDoc) -> Option<Quota> {
         let updated_at = doc.i64("/updated_at")?;
         let n = doc.len("/week/points").unwrap_or(0).min(400);
@@ -322,6 +340,8 @@ mod widget {
         d
     }
 
+    /// The setup messages, then the dashboard.
+    #[cfg(target_arch = "wasm32")]
     fn screen(s: &State, now: i64) -> Node {
         if !key_bound() {
             return message("Add the quota server key in the widget settings.");
@@ -329,6 +349,11 @@ mod widget {
         if server_url().is_none() {
             return message("Add the quota server address in the widget settings.");
         }
+        dashboard(s, now)
+    }
+
+    /// The quota from the last reply. Also drawn by the README preview.
+    pub(crate) fn dashboard(s: &State, now: i64) -> Node {
         let Some(q) = &s.quota else {
             return message(if s.failed { "Cannot reach the quota server." } else { "Loading…" });
         };
@@ -370,6 +395,7 @@ mod widget {
 
     // ── Widget lifecycle ────────────────────────────────────────────────
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn init() {
         let handle = register_poll(
@@ -384,6 +410,7 @@ mod widget {
         POLL.set(Some(handle));
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn on_params_update() {
         POLL.with_borrow(|h| {
@@ -394,11 +421,13 @@ mod widget {
         request_frame();
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn on_system_update() {
         request_frame();
     }
 
+    #[cfg(target_arch = "wasm32")]
     #[unsafe(no_mangle)]
     pub extern "C" fn render(_delta_ms: u32) {
         let vp = widget_viewport();

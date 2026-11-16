@@ -17,6 +17,26 @@ Shows the daily fishing index of one spot from [dovepescare.com](https://dovepes
   | 638 × 238 | gauge, best window, 4 readings |
   | 317 × 238 | gauge, water, air, best window |
 
+## Screens
+
+A sea spot: the measured sea temperature and the waves replace the river flow.
+
+![Portocanale di Rimini, index 84, Excellent](../../docs/screenshots/fishing-spot-sea.png)
+
+A river spot on a day with a flood warning:
+
+![Panaro a Vignola, index 12, Avoid, River in flood](../../docs/screenshots/fishing-spot-fullscreen.png)
+
+The smaller sizes: 638 × 480, 638 × 238 and 317 × 238.
+
+<p>
+  <img src="../../docs/screenshots/fishing-spot-large.png" width="49%" alt="638 × 480: gauge, best window, moon, 6 readings, 2 species">
+  <img src="../../docs/screenshots/fishing-spot-medium.png" width="49%" alt="638 × 238: gauge, best window, 4 readings">
+  <img src="../../docs/screenshots/fishing-spot-small.png" width="25%" alt="317 × 238: gauge, water, air, best window">
+</p>
+
+The screens use the public Open-Meteo replies in `fixtures/` for two public catalogue spots. To make them again, see "Screenshots" in the [root README](../../README.md).
+
 ## Data
 
 - It connects only to Open-Meteo, every 15 min:

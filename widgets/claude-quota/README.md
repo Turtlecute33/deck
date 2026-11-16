@@ -5,6 +5,16 @@ Shows your Claude plan use: the 5-hour and the weekly use with the time to reset
 - The data comes from your quota server (`GET /v1/quota`), not from Claude. The quota server is a separate program. It is not in this repo.
 - Size: 1280 × 480 (full screen) only.
 
+## Screens
+
+![Mid-week: the 5-hour and weekly use on the left, the weekly use since the last reset on the right](../../docs/screenshots/claude-quota-fullscreen.png)
+
+Near the limits, at 80 % or more, the percentage turns orange:
+
+![Near the limits](../../docs/screenshots/claude-quota-near-limit.png)
+
+The screens use made-up values. To make them again, see "Screenshots" in the [root README](../../README.md).
+
 ## Data
 
 - It connects only to the quota server address in the widget settings. There is no default address.

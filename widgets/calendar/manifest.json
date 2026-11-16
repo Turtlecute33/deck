@@ -1,6 +1,6 @@
 {
   "uid": "cdee50e2-e853-412a-a724-0200b72d09aa",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "name": "Calendar",
   "subname": "Rail",
   "description": "Today's events from the Google calendars you choose. The current or next event is large, the full day is one line below it.",

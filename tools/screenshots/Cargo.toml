@@ -1,0 +1,25 @@
+[package]
+name = "deck-screenshots"
+version = "0.0.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+publish = false
+description = "Renders the widgets' sample screens to PNG for the READMEs (macOS, OpenGL)."
+
+# A tool for the host, not a widget: its own workspace, so the widget
+# workspace and its wasm32 build never see it.
+[workspace]
+# The bmc-main checkout is a workspace of its own.
+exclude = [".bmc-main"]
+
+[dependencies]
+anyhow = "1"
+# The renderer the Deck runs, from bmc-main at the SDK rev of the root Cargo.toml.
+# tools/screenshots.sh checks it out here with its Git LFS files (fonts, locale
+# data), which a cargo git dependency does not fetch.
+bmc-intl = { path = ".bmc-main/bmc-intl/core" }
+bmc-render = { path = ".bmc-main/bmc-render" }
+glow = "0.16"
+glutin = "0.32"
+image = { version = "0.25", default-features = false, features = ["png"] }
+raw-window-handle = "0.6"

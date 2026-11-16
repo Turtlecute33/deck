@@ -1,6 +1,6 @@
 {
   "uid": "dd0fe3e6-7a06-4789-83ff-8f0ed392dfb3",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "name": "GitHub",
   "description": "Your unread GitHub notifications. With none, the stars you received today, followers and your top repo.",
   "binary": "bin/github-notify",

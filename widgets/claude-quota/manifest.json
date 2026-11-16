@@ -1,6 +1,6 @@
 {
   "uid": "a4ca6c7d-604c-476f-8ed1-51a127b8b939",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "name": "Claude Quota",
   "description": "Claude plan use: 5-hour and weekly limits, and the weekly use since the last reset.",
   "binary": "bin/claude-quota",

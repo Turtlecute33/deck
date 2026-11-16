@@ -376,6 +376,7 @@ pub fn two_lines(title: &str, per_line: usize) -> (String, String) {
 }
 
 #[cfg(test)]
+#[expect(clippy::unwrap_used, reason = "fixed test data")]
 mod tests {
     use super::*;
 
